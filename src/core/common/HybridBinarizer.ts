@@ -49,9 +49,11 @@ export default class HybridBinarizer extends GlobalHistogramBinarizer {
     private static MIN_DYNAMIC_RANGE = 24;
 
     private matrix: BitMatrix | null = null;
+    private threshold: number | null = null;
 
-    public constructor(source: LuminanceSource) {
+    public constructor(source: LuminanceSource, threshold: number|null = null) {
         super(source);
+        this.threshold = threshold;
     }
 
     /**
@@ -67,6 +69,20 @@ export default class HybridBinarizer extends GlobalHistogramBinarizer {
         const source = this.getLuminanceSource();
         const width = source.getWidth();
         const height = source.getHeight();
+        if (this.threshold !== null) {
+            const luminances = source.getMatrix();
+            const matrix = new BitMatrix(width, height);
+            let i = 0;
+            for (let y = 0; y < height; y ++) {
+                for (let x = 0; x < width; x ++) {
+                    if (luminances[i] <= this.threshold) {
+                        matrix.set(x, y);
+                    }
+                    i ++;
+                }
+            }
+            return this.matrix = matrix;
+        }
         if (width >= HybridBinarizer.MINIMUM_DIMENSION && height >= HybridBinarizer.MINIMUM_DIMENSION) {
             const luminances = source.getMatrix();
             let subWidth = width >> HybridBinarizer.BLOCK_SIZE_POWER;

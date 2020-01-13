@@ -7,7 +7,7 @@ import IllegalArgumentException from '../core/IllegalArgumentException';
  */
 export class HTMLCanvasElementLuminanceSource extends LuminanceSource {
 
-    private buffer: Uint8ClampedArray;
+    public buffer: Uint8ClampedArray;
 
     private static DEGREE_TO_RADIANS = Math.PI / 180;
 
