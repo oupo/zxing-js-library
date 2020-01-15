@@ -382,7 +382,7 @@ export default class Version {
     private ecBlocks: ECBlocks[];
     private totalCodewords: number; /*int*/
 
-    private constructor(private versionNumber: number /*int*/,
+    public constructor(private versionNumber: number /*int*/,
         private alignmentPatternCenters: Int32Array,
         ...ecBlocks: ECBlocks[]) {
         this.ecBlocks = ecBlocks;
