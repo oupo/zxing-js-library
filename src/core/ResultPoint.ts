@@ -63,9 +63,6 @@ export default class ResultPoint {
      * @param patterns array of three {@code ResultPoint} to order
      */
     public static orderBestPatterns(patterns: Array<ResultPoint>): void {
-        console.log('patterns[0]: ', patterns[0]);
-        console.log('patterns[1]: ', patterns[1]);
-        console.log('patterns[2]: ', patterns[2]);
 
         // Find distances between pattern centers
         const zeroOneDistance = this.distance(patterns[0], patterns[1]);

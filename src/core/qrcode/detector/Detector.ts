@@ -76,6 +76,7 @@ export default class Detector {
      * @throws FormatException if a QR Code cannot be decoded
      */
     public detect(hints: Map<DecodeHintType, any>): DetectorResult /*throws NotFoundException, FormatException*/ {
+
         this.resultPointCallback = (hints === null || hints === undefined) ? null :
         /*(ResultPointCallback) */hints.get(DecodeHintType.NEED_RESULT_POINT_CALLBACK);
 
@@ -95,19 +96,13 @@ export default class Detector {
         if (moduleSize < 1.0) {
             throw new NotFoundException('No pattern found in proccess finder.');
         }
-        console.log('topLeft: ', topLeft);
-        console.log('topRight: ', topRight);
-        console.log('bottomLeft: ', bottomLeft);
         const dimension = Detector.computeDimension(topLeft, topRight, bottomLeft, moduleSize);
-        console.log(dimension);
-        const dim = dimension[0];
-        const wide = dimension[0] !== dimension[1];
-        const provisionalVersion: Version = wide ? null : Version.getProvisionalVersionForDimension(dim);
-        const modulesBetweenFPCenters = wide ? dimension[0] : provisionalVersion.getDimensionForVersion() - 7;
+        const provisionalVersion: Version = Version.getProvisionalVersionForDimension(dimension);
+        const modulesBetweenFPCenters = provisionalVersion.getDimensionForVersion() - 7;
 
         let alignmentPattern: AlignmentPattern = null;
         // Anything above version 1 has an alignment pattern
-        if (wide || provisionalVersion.getAlignmentPatternCenters().length > 0) {
+        if (provisionalVersion.getAlignmentPatternCenters().length > 0) {
 
             // Guess where a "bottom right" finder pattern would have been
             const bottomRightX: number /*float*/ = topRight.getX() - topLeft.getX() + bottomLeft.getX();
@@ -118,7 +113,6 @@ export default class Detector {
             const correctionToTopLeft: number /*float*/ = 1.0 - 3.0 / modulesBetweenFPCenters;
             const estAlignmentX = /*(int) */Math.floor(topLeft.getX() + correctionToTopLeft * (bottomRightX - topLeft.getX()));
             const estAlignmentY = /*(int) */Math.floor(topLeft.getY() + correctionToTopLeft * (bottomRightY - topLeft.getY()));
-            console.log([estAlignmentX, estAlignmentY]);
 
             // Kind of arbitrary -- expand search radius before giving up
             for (let i = 4; i <= 16; i <<= 1) {
@@ -137,12 +131,11 @@ export default class Detector {
             }
             // If we didn't find alignment pattern... well try anyway without it
         }
-        console.log('alignmentPattern', alignmentPattern);
 
         const transform: PerspectiveTransform =
-            Detector.createTransform(topLeft, topRight, bottomLeft, alignmentPattern, dim);
+            Detector.createTransform(topLeft, topRight, bottomLeft, alignmentPattern, dimension);
 
-        const bits: BitMatrix = Detector.sampleGrid(this.image, transform, dim);
+        const bits: BitMatrix = Detector.sampleGrid(this.image, transform, dimension);
 
         let points: ResultPoint[];
         if (alignmentPattern === null) {
@@ -210,12 +203,9 @@ export default class Detector {
     private static computeDimension(topLeft: ResultPoint,
         topRight: ResultPoint,
         bottomLeft: ResultPoint,
-        moduleSize: number/*float*/): [number, number] /*int*/ /*throws NotFoundException*/ {
+        moduleSize: number/*float*/): number /*int*/ /*throws NotFoundException*/ {
         const tltrCentersDimension = MathUtils.round(ResultPoint.distance(topLeft, topRight) / moduleSize);
         const tlblCentersDimension = MathUtils.round(ResultPoint.distance(topLeft, bottomLeft) / moduleSize);
-        if (Math.abs((tltrCentersDimension + 7) - 126) < 13 && Math.abs((tlblCentersDimension + 7) - 94) < 10) {
-            return [126, 94];
-        }
         let dimension = Math.floor((tltrCentersDimension + tlblCentersDimension) / 2) + 7;
         switch (dimension & 0x03) { // mod 4
             case 0:
@@ -228,7 +218,7 @@ export default class Detector {
             case 3:
                 throw new NotFoundException('Dimensions could be not found.');
         }
-        return [dimension, dimension];
+        return dimension;
     }
 
     /**
