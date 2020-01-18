@@ -84,6 +84,7 @@ export { default as QRCodeErrorCorrectionLevel } from './core/qrcode/decoder/Err
 export { default as QRCodeECBlocks } from './core/qrcode/decoder/ECBlocks';
 export { default as QRCodeECB } from './core/qrcode/decoder/ECB';
 export { default as QRCodeFinderPatternFinder } from './core/qrcode/detector/FinderPatternFinder';
+export { default as QRCodeFinderPattern } from './core/qrcode/detector/FinderPattern';
 export { default as QRCodeEncoderQRCode } from './core/qrcode/encoder/QRCode';
 
 // core/oned
