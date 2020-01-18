@@ -69,11 +69,11 @@ export default class FinderPatternFinder {
         return this.image;
     }
 
-    protected getPossibleCenters(): FinderPattern[] {
+    public getPossibleCenters(): FinderPattern[] {
         return this.possibleCenters;
     }
 
-    public find(hints: Map<DecodeHintType, any>): FinderPatternInfo /*throws NotFoundException */ {
+    public find(hints: Map<DecodeHintType, any>, minNum: number = 3): FinderPatternInfo /*throws NotFoundException */ {
         const tryHarder: boolean = (hints !== null && hints !== undefined) && undefined !== hints.get(DecodeHintType.TRY_HARDER);
         const pureBarcode: boolean = (hints !== null && hints !== undefined) && undefined !== hints.get(DecodeHintType.PURE_BARCODE);
         const image = this.image;
@@ -118,7 +118,7 @@ export default class FinderPatternFinder {
                                     // expensive and didn't improve performance.
                                     iSkip = 2;
                                     if (this.hasSkipped === true) {
-                                        done = this.haveMultiplyConfirmedCenters();
+                                        done = this.haveMultiplyConfirmedCenters(minNum);
                                     } else {
                                         const rowSkip = this.findRowSkip();
                                         if (rowSkip > stateCount[2]) {
@@ -172,13 +172,13 @@ export default class FinderPatternFinder {
                     iSkip = stateCount[0];
                     if (this.hasSkipped) {
                         // Found a third one
-                        done = this.haveMultiplyConfirmedCenters();
+                        done = this.haveMultiplyConfirmedCenters(minNum);
                     }
                 }
             }
         }
 
-        const patternInfo: FinderPattern[] = this.selectBestPatterns();
+        const patternInfo: FinderPattern[] = this.selectBestPatterns(minNum);
         ResultPoint.orderBestPatterns(patternInfo);
 
         return new FinderPatternInfo(patternInfo);
@@ -556,7 +556,7 @@ export default class FinderPatternFinder {
      *         at least {@link #CENTER_QUORUM} times each, and, the estimated module size of the
      *         candidates is "pretty similar"
      */
-    private haveMultiplyConfirmedCenters(): boolean {
+    private haveMultiplyConfirmedCenters(minNum: number): boolean {
         let confirmedCount = 0;
         let totalModuleSize: number /*float*/ = 0.0;
         const max = this.possibleCenters.length;
@@ -566,7 +566,7 @@ export default class FinderPatternFinder {
                 totalModuleSize += pattern.getEstimatedModuleSize();
             }
         }
-        if (confirmedCount < 3) {
+        if (confirmedCount < 4) {
             return false;
         }
         // OK, we have at least 3 confirmed centers, but, it's possible that one is a "false positive"
@@ -587,10 +587,10 @@ export default class FinderPatternFinder {
      *         size differs from the average among those patterns the least
      * @throws NotFoundException if 3 such finder patterns do not exist
      */
-    private selectBestPatterns(): FinderPattern[] /*throws NotFoundException */ {
+    private selectBestPatterns(minNum: number): FinderPattern[] /*throws NotFoundException */ {
 
         const startSize = this.possibleCenters.length;
-        if (startSize < 3) {
+        if (startSize < minNum) {
             // Couldn't find enough finder patterns
             throw new NotFoundException();
         }
@@ -599,7 +599,7 @@ export default class FinderPatternFinder {
 
         let average: float;
         // Filter outlier possibilities whose module size is too different
-        if (startSize > 3) {
+        if (startSize > minNum) {
             // But we can only afford to do so if we have at least 4 possibilities to choose from
             let totalModuleSize: float = 0.0;
             let square: float = 0.0;
@@ -624,7 +624,7 @@ export default class FinderPatternFinder {
 
             const limit: float = Math.max(0.2 * average, stdDev);
 
-            for (let i = 0; i < possibleCenters.length && possibleCenters.length > 3; i++) {
+            for (let i = 0; i < possibleCenters.length && possibleCenters.length > minNum; i++) {
                 const pattern: FinderPattern = possibleCenters[i];
                 if (Math.abs(pattern.getEstimatedModuleSize() - average) > limit) {
                     possibleCenters.splice(i, 1);
@@ -633,7 +633,7 @@ export default class FinderPatternFinder {
             }
         }
 
-        if (possibleCenters.length > 3) {
+        if (possibleCenters.length > minNum) {
             // Throw away all but those first size candidate points we found.
 
             let totalModuleSize: float = 0.0;
@@ -658,13 +658,9 @@ export default class FinderPatternFinder {
                     }
                 });
 
-            possibleCenters.splice(3); // this is not realy necessary as we only return first 3 anyway
+            possibleCenters.splice(minNum); // this is not realy necessary as we only return first 3 anyway
         }
 
-        return [
-            possibleCenters[0],
-            possibleCenters[1],
-            possibleCenters[2]
-        ];
+        return Array.from(possibleCenters);
     }
 }

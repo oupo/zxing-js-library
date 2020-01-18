@@ -83,6 +83,7 @@ export { default as QRCodeDataBlock } from './core/qrcode/decoder/DataBlock';
 export { default as QRCodeErrorCorrectionLevel } from './core/qrcode/decoder/ErrorCorrectionLevel';
 export { default as QRCodeECBlocks } from './core/qrcode/decoder/ECBlocks';
 export { default as QRCodeECB } from './core/qrcode/decoder/ECB';
+export { default as QRCodeFinderPatternFinder } from './core/qrcode/detector/FinderPatternFinder';
 export { default as QRCodeEncoderQRCode } from './core/qrcode/encoder/QRCode';
 
 // core/oned
