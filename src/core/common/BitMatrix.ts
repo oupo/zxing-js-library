@@ -451,6 +451,10 @@ export default class BitMatrix /*implements Cloneable*/ {
         return this.rowSize;
     }
 
+    public getBits(): Int32Array {
+        return this.bits;
+    }
+
     /*@Override*/
     public equals(o: Object): boolean {
         if (!(o instanceof BitMatrix)) {
